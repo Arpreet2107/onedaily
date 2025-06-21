@@ -1,7 +1,25 @@
 import axiosClient from "./axiosClient";
 
-export const fetchEntries = () => axiosClient.get("/entries").then(res => res.data);
+// ✅ Fetch all entries
+export const fetchEntries = async () => {
+  const response = await axiosClient.get("/entries");
+  return response.data;
+};
 
-export const addEntry = (entry) => axiosClient.post("/entries", entry).then(res => res.data);
+// ✅ Add a new entry
+export const addEntry = async (entry) => {
+  const response = await axiosClient.post("/entries", entry);
+  return response.data;
+};
 
-export const deleteEntry = (id) => axiosClient.delete(`/entries/${id}`);
+// ✅ Delete an entry by ID
+export const deleteEntry = async (id) => {
+  const response = await axiosClient.delete(`/entries/${id}`);
+  return response.data; // optional; or just return id
+};
+
+// ✅ Update an entry by ID
+export const updateEntry = async ({ id, content }) => {
+  const response = await axiosClient.put(`/entries/${id}`, { content });
+  return response.data;
+};

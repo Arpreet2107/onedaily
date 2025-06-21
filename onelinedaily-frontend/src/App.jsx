@@ -1,8 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 
-function EntryForm({ addEntry }) {
+// Debounce hook
+function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
+
+function EntryForm({ addEntry, disabled }) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -16,8 +26,9 @@ function EntryForm({ addEntry }) {
     try {
       await addEntry(content.trim());
       setContent('');
-    } catch {
-      toast.error('Failed to add entry');
+    } catch (err) {
+      toast.error('Failed to add entry.');
+      console.error(err);
     }
     setSubmitting(false);
   };
@@ -30,12 +41,12 @@ function EntryForm({ addEntry }) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         className="flex-grow p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        disabled={submitting}
+        disabled={submitting || disabled}
       />
       <button
         type="submit"
-        disabled={submitting}
-        className="bg-indigo-600 text-white px-5 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+        disabled={submitting || disabled || !content.trim()}
+        className="bg-indigo-600 text-white px-5 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition"
       >
         {submitting ? 'Adding...' : 'Add Entry'}
       </button>
@@ -43,8 +54,41 @@ function EntryForm({ addEntry }) {
   );
 }
 
-function EntryList({ entries, onDelete }) {
-  if (entries.length === 0) return <p className="text-center text-gray-500 mt-10">No entries found.</p>;
+function EntryList({ entries, onDelete, onUpdate }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const startEdit = (id, currentContent) => {
+    setEditingId(id);
+    setEditContent(currentContent);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditContent('');
+  };
+
+  const saveEdit = async () => {
+    if (!editContent.trim()) {
+      toast.error('Entry cannot be empty!');
+      return;
+    }
+    setSaving(true);
+    try {
+      await onUpdate({ id: editingId, content: editContent.trim() });
+      toast.success('Entry updated!');
+      cancelEdit();
+    } catch (error) {
+      toast.error('Failed to update entry.');
+      console.error(error);
+    }
+    setSaving(false);
+  };
+
+  if (!entries || entries.length === 0) {
+    return <p className="text-center text-gray-500 mt-10">No entries found.</p>;
+  }
 
   return (
     <ul className="space-y-4">
@@ -56,19 +100,70 @@ function EntryList({ entries, onDelete }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: 50 }}
             layout
-            className="bg-indigo-50 p-4 rounded-md shadow flex justify-between items-center"
+            className="bg-indigo-50 p-4 rounded-md shadow flex justify-between items-start gap-4"
           >
-            <div>
-              <p className="text-gray-800">{content}</p>
-              <p className="text-sm text-indigo-400 mt-1">{new Date(date).toLocaleDateString()}</p>
+            <div className="flex-grow">
+              {editingId === id ? (
+                <>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    rows={3}
+                    disabled={saving}
+                  />
+                  <p className="text-sm text-indigo-400 mt-1">
+                    {date ? new Date(date).toLocaleDateString() : 'No date'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-800 whitespace-pre-wrap">{content}</p>
+                  <p className="text-sm text-indigo-400 mt-1">
+                    {date ? new Date(date).toLocaleDateString() : 'No date'}
+                  </p>
+                </>
+              )}
             </div>
-            <button
-              onClick={() => onDelete(id)}
-              className="text-red-600 hover:text-red-800 font-semibold transition"
-              aria-label="Delete Entry"
-            >
-              &times;
-            </button>
+
+            <div className="flex flex-col gap-2">
+              {editingId === id ? (
+                <>
+                  <button
+                    onClick={saveEdit}
+                    disabled={saving}
+                    className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 disabled:opacity-50"
+                    type="button"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    className="bg-gray-300 text-gray-800 px-3 py-1 rounded-md hover:bg-gray-400"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => startEdit(id, content)}
+                    className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
+                    type="button"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(id)}
+                    className="text-red-600 hover:text-red-800 font-semibold"
+                    type="button"
+                  >
+                    &times;
+                  </button>
+                </>
+              )}
+            </div>
           </motion.li>
         ))}
       </AnimatePresence>
@@ -81,25 +176,27 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
 
-  // Fetch entries on load
-  useEffect(() => {
-    fetchEntries();
-  }, []);
+  const debouncedSearch = useDebounce(search, 300);
 
-  async function fetchEntries() {
+  const fetchEntries = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/entries');
       if (!res.ok) throw new Error('Failed to fetch entries');
       const data = await res.json();
-      setEntries(data.sort((a,b) => new Date(b.date) - new Date(a.date)));
+      setEntries(Array.isArray(data) ? data.sort((a, b) => new Date(b.date) - new Date(a.date)) : []);
     } catch (error) {
       toast.error('Could not load entries.');
+      console.error(error);
     }
     setLoading(false);
-  }
+  }, []);
 
-  async function addEntry(content) {
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
+
+  const addEntry = async (content) => {
     const res = await fetch('/api/entries', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -107,49 +204,58 @@ export default function App() {
     });
     if (!res.ok) throw new Error('Failed to add entry');
     const newEntry = await res.json();
-    setEntries(prev => [newEntry, ...prev]);
+    setEntries((prev) => [newEntry, ...prev]);
     toast.success('Entry added!');
-  }
+  };
 
-  async function deleteEntry(id) {
+  const updateEntry = async ({ id, content }) => {
+    const res = await fetch(`/api/entries/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error('Failed to update entry');
+    const updated = await res.json();
+    setEntries((prev) => prev.map((entry) => (entry.id === id ? updated : entry)));
+  };
+
+  const deleteEntry = async (id) => {
     if (!window.confirm('Are you sure you want to delete this entry?')) return;
     const res = await fetch(`/api/entries/${id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      toast.error('Failed to delete entry.');
-      return;
-    }
-    setEntries(prev => prev.filter(entry => entry.id !== id));
+    if (!res.ok) throw new Error('Failed to delete entry');
+    setEntries((prev) => prev.filter((entry) => entry.id !== id));
     toast.success('Entry deleted!');
-  }
+  };
 
-  // Filter entries for search
   const filteredEntries = useMemo(() => {
-    return entries.filter(e => e.content.toLowerCase().includes(search.toLowerCase()));
-  }, [entries, search]);
+    return entries.filter((e) =>
+      e.content.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+  }, [entries, debouncedSearch]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <Toaster position="top-right" />
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-5xl font-extrabold text-indigo-600 mb-10 text-center drop-shadow-md select-none">
+        <h1 className="text-5xl font-extrabold text-indigo-600 mb-10 text-center">
           One Daily Journal
         </h1>
 
-        <EntryForm addEntry={addEntry} />
+        <EntryForm addEntry={addEntry} disabled={loading} />
 
         <input
           type="search"
           placeholder="Search your entries..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full mb-6 p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          aria-label="Search entries"
+          disabled={loading}
         />
 
         {loading ? (
           <p className="text-center text-gray-500 text-lg">Loading entries...</p>
         ) : (
-          <EntryList entries={filteredEntries} onDelete={deleteEntry} />
+          <EntryList entries={filteredEntries} onDelete={deleteEntry} onUpdate={updateEntry} />
         )}
       </div>
     </div>
