@@ -7,39 +7,34 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/entries")
-@CrossOrigin(origins = "*") // Allow frontend to access API
 public class EntryController {
 
     @Autowired
     private EntryRepository entryRepository;
 
+    // Get all entries
     @GetMapping
     public List<Entry> getAllEntries() {
         return entryRepository.findAll();
     }
 
-    @GetMapping("/today")
-    public Optional<Entry> getTodayEntry() {
-        return entryRepository.findByDate(LocalDate.now());
+    // Get entries by date
+    @GetMapping("/date/{date}")
+    public List<Entry> getEntriesByDate(@PathVariable String date) {
+        return entryRepository.findByDate(LocalDate.parse(date));
     }
 
+    // Create a new entry
     @PostMapping
     public Entry createEntry(@RequestBody Entry entry) {
         entry.setDate(LocalDate.now());
         return entryRepository.save(entry);
     }
 
-    @PutMapping("/{id}")
-    public Entry updateEntry(@PathVariable String id, @RequestBody Entry updated) {
-        Entry entry = entryRepository.findById(id).orElseThrow();
-        entry.setContent(updated.getContent());
-        return entryRepository.save(entry);
-    }
-
+    // Delete an entry by id
     @DeleteMapping("/{id}")
     public void deleteEntry(@PathVariable String id) {
         entryRepository.deleteById(id);
