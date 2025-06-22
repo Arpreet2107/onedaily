@@ -106,14 +106,6 @@ Uses MockMvc to simulate real HTTP requests to the controller.
 
 Covers all API operations: GET, POST, PUT, DELETE.
 ```
----
-### ✅ Test Coverage Report
-
-Achieved **86% test coverage** using JUnit, Mockito, and JaCoCo.
-
-![Test Coverage Screenshot](./totalTestReport.png)
-
----
 
 ### 📊 Code Coverage: **
 ```
