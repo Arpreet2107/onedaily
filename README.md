@@ -1,4 +1,4 @@
-# 📝 One Daily Journal
+# 📝 OneLineDaily Journal
 
 A minimalistic, full-stack journaling web application designed for users to effortlessly capture and reflect on their daily thoughts. It provides a smooth user experience with robust API validation.
 
