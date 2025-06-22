@@ -106,6 +106,15 @@ Uses MockMvc to simulate real HTTP requests to the controller.
 
 Covers all API operations: GET, POST, PUT, DELETE.
 ```
+---
+### ✅ Test Coverage Report
+
+Achieved **86% test coverage** using JUnit, Mockito, and JaCoCo.
+
+![Test Coverage](./onelinedaily-backend/src/assets/totalTestReport.png)
+
+
+---
 
 ### 📊 Code Coverage: **
 ```
@@ -136,6 +145,6 @@ onelinedaily/
 ```
 ---
 ### 🤝 Contributors
- #### 💻 Arpreet Mahala – Full Stack Developer
+#### 💻 Arpreet Mahala – Full Stack Developer
 
- #### 🧪Special thanks to Keploy for the testing framework and inspiration!
+#### 🧪Special thanks to Keploy for the testing framework and inspiration!
