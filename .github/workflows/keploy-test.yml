@@ -1,0 +1,47 @@
+name: keploy-test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Keploy CLI
+        run: |
+          curl -s https://keploy.io/install.sh | bash
+          echo "$HOME/.keploy/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.keploy/bin:$PATH"
+
+      - name: Verify Keploy Installation
+        run: keploy version
+
+      - name: Set up JDK 21 with Oracle
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'oracle'
+          java-version: '21'
+
+      - name: Build Spring Boot Project
+        run: |
+          cd onelinedaily-backend
+          mvn clean package
+
+      - name: Start Backend and Run Keploy Tests
+        run: |
+          cd onelinedaily-backend
+          nohup java -jar target/*.jar &
+          sleep 10
+          keploy test -c "java -jar target/*.jar" -r true
