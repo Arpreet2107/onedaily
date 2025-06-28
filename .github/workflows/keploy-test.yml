@@ -19,16 +19,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Keploy CLI Properly
+      - name: Install Keploy CLI (Manual & Stable)
         run: |
-          curl -s https://keploy.io/install.sh | bash
           mkdir -p $HOME/.keploy/bin
+          curl -L https://github.com/keploy/keploy/releases/download/v2.6.14/keploy_linux_amd64.tar.gz -o keploy.tar.gz
+          tar -xzf keploy.tar.gz
           mv keploy $HOME/.keploy/bin/keploy
           chmod +x $HOME/.keploy/bin/keploy
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
-          echo "Keploy binary listing:"
+          echo "Keploy Installed at:"
           ls -l $HOME/.keploy/bin
-          $HOME/.keploy/bin/keploy version  # Updated version command
+          $HOME/.keploy/bin/keploy version
 
       - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
