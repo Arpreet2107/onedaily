@@ -28,7 +28,7 @@ jobs:
       - name: Verify Keploy Installation
         run: keploy version
 
-      - name: Set up JDK 21 (Oracle)
+      - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
         with:
           distribution: 'oracle'
