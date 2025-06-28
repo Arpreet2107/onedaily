@@ -1,16 +1,16 @@
-name: Keploy API Testing
+name: keploy-test
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    branches:
+      - main
 
 jobs:
-  keploy-test:
+  test:
     runs-on: ubuntu-latest
 
     services:
-      mongodb:
+      mongo:
         image: mongo
         ports:
           - 27017:27017
@@ -19,19 +19,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install Keploy CLI
-        run: curl -s https://raw.githubusercontent.com/keploy/keploy/main/install.sh | bash
+        run: curl -s https://keploy.io/install.sh | bash
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
       - name: Start App and Run Keploy Tests
         run: |
-          nohup npm start &  # or node index.js based on your start command
-          sleep 5
-          keploy test --delay 5
+          nohup npm start &
+          sleep 10
+          keploy test -c "npm start" -r true
+
+      - name: Stop containers
+        run: docker stop $(docker ps -q)
