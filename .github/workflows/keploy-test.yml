@@ -22,11 +22,13 @@ jobs:
       - name: Install Keploy CLI Properly
         run: |
           curl -s https://keploy.io/install.sh | bash
+          mkdir -p $HOME/.keploy/bin
+          mv keploy $HOME/.keploy/bin/keploy
           chmod +x $HOME/.keploy/bin/keploy
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.keploy/bin:$PATH"
+          echo "Keploy binary listing:"
           ls -l $HOME/.keploy/bin
-          $HOME/.keploy/bin/keploy --version
+          $HOME/.keploy/bin/keploy version  # Updated version command
 
       - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
