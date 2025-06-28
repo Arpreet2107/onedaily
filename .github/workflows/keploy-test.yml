@@ -29,7 +29,7 @@ jobs:
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
           echo "Keploy Installed at:"
           ls -l $HOME/.keploy/bin
-          $HOME/.keploy/bin/keploy --version   # Call Keploy directly with full path
+          $HOME/.keploy/bin/keploy --version
 
       - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
@@ -48,4 +48,4 @@ jobs:
           cd onelinedaily-backend
           nohup java -jar target/*.jar &
           sleep 10
-          keploy test -c "java -jar target/*.jar" -r true
+          keploy test -c "java -jar target/*.jar"
