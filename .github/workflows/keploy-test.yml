@@ -19,21 +19,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
       - name: Install Keploy CLI
         run: curl -s https://keploy.io/install.sh | bash
 
-      - name: Install backend dependencies
-        working-directory: ./onelinedaily-backend
-        run: npm install
+      - name: Set up JDK 21 with Oracle Distribution
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'oracle'
+          java-version: '21'
+
+      - name: Build Spring Boot Project with Maven
+        run: mvn clean package
 
       - name: Start Backend and Run Keploy Tests
-        working-directory: ./onelinedaily-backend
         run: |
-          nohup npm start &
+          nohup java -jar target/*.jar &  # Update jar name if specific
           sleep 10
-          keploy test -c "npm start" -r true
+          keploy test -c "java -jar target/*.jar" -r true
