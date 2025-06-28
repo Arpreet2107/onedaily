@@ -16,19 +16,22 @@ jobs:
           - 27017:27017
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Keploy CLI
-        run: curl -s https://keploy.io/install.sh | bash
+      - name: Install Keploy CLI (Manual Binary Method)
+        run: |
+          mkdir -p $HOME/.keploy/bin
+          curl -Lo $HOME/.keploy/bin/keploy https://github.com/keploy/keploy/releases/latest/download/keploy-linux-amd64
+          chmod +x $HOME/.keploy/bin/keploy
+          echo "$HOME/.keploy/bin" >> $GITHUB_PATH
 
-      - name: Add Keploy to PATH
-        run: echo "$HOME/.keploy/bin" >> $GITHUB_PATH
+      - name: Confirm Keploy Installed
+        run: |
+          export PATH="$HOME/.keploy/bin:$PATH"
+          keploy version
 
-      - name: Verify Keploy Installation
-        run: keploy version
-
-      - name: Setup JDK 21 (Oracle)
+      - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
         with:
           distribution: 'oracle'
@@ -44,4 +47,5 @@ jobs:
           cd onelinedaily-backend
           nohup java -jar target/*.jar &
           sleep 10
+          export PATH="$HOME/.keploy/bin:$PATH"
           keploy test -c "java -jar target/*.jar" -r true
