@@ -14,11 +14,6 @@ jobs:
         image: mongo
         ports:
           - 27017:27017
-        options: >-
-          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'" 
-          --health-interval=10s 
-          --health-timeout=5s 
-          --health-retries=5
 
     steps:
       - name: Checkout code
@@ -30,17 +25,17 @@ jobs:
           node-version: '18'
 
       - name: Install Keploy CLI
-        run: curl -s https://keploy.io/install.sh | bash
+        run: curl -s https://raw.githubusercontent.com/keploy/keploy/main/install.sh | bash
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
       - name: Start App and Run Keploy Tests
         run: |
           nohup npm start > app.log 2>&1 &
-          sleep 15  # Give enough time for your app to start
+          sleep 15
           keploy test -c "npm start" -r true
 
-      - name: Stop Running Containers
-        if: always()
-        run: docker ps -q | xargs -r docker stop
+      - name: Stop containers
+        run: |
+          docker ps -q | xargs -r docker stop
