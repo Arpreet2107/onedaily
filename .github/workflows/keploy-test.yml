@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  keploy-test:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -25,15 +25,13 @@ jobs:
           curl -L https://github.com/keploy/keploy/releases/latest/download/keploy-linux-amd64 -o $HOME/.keploy/bin/keploy
           chmod +x $HOME/.keploy/bin/keploy
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
-          ls -lah $HOME/.keploy/bin
-          file $HOME/.keploy/bin/keploy  # Confirm it's a binary
 
       - name: Verify Keploy Installation
         run: |
           export PATH="$HOME/.keploy/bin:$PATH"
-          $HOME/.keploy/bin/keploy version
+          keploy version
 
-      - name: Set up JDK 21 (Oracle)
+      - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
         with:
           distribution: 'oracle'
@@ -44,7 +42,7 @@ jobs:
           cd onelinedaily-backend
           mvn clean package
 
-      - name: Start Spring Boot and Run Keploy Tests
+      - name: Start Backend and Run Keploy Tests
         run: |
           cd onelinedaily-backend
           nohup java -jar target/*.jar &
