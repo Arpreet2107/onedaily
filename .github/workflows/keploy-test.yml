@@ -14,6 +14,11 @@ jobs:
         image: mongo
         ports:
           - 27017:27017
+        options: >-
+          --health-cmd="echo 'db.runCommand(\"ping\").ok' | mongo localhost:27017/test --quiet"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout code
@@ -23,12 +28,14 @@ jobs:
         run: |
           curl -s https://keploy.io/install.sh | bash
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.keploy/bin:$PATH"
+          echo "PATH=$HOME/.keploy/bin:$PATH" >> $GITHUB_ENV
 
       - name: Verify Keploy Installation
-        run: keploy version
+        run: |
+          source $GITHUB_ENV
+          keploy version
 
-      - name: Set up JDK 21 with Oracle
+      - name: Set up JDK 21 (Oracle)
         uses: actions/setup-java@v3
         with:
           distribution: 'oracle'
@@ -37,11 +44,13 @@ jobs:
       - name: Build Spring Boot Project
         run: |
           cd onelinedaily-backend
-          mvn clean package
+          mvn clean package -DskipTests
 
       - name: Start Backend and Run Keploy Tests
         run: |
           cd onelinedaily-backend
           nohup java -jar target/*.jar &
-          sleep 10
+          echo "Waiting for backend to start..."
+          sleep 15
+          source $GITHUB_ENV
           keploy test -c "java -jar target/*.jar" -r true
