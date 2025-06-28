@@ -29,7 +29,7 @@ jobs:
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
           echo "Keploy Installed at:"
           ls -l $HOME/.keploy/bin
-          $HOME/.keploy/bin/keploy version
+          keploy --version    
 
       - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
