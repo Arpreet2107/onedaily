@@ -19,10 +19,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Keploy CLI Safely
+      - name: Install Keploy CLI (Correct Way)
         run: |
           mkdir -p $HOME/.keploy/bin
-          curl -L https://github.com/keploy/keploy/releases/latest/download/keploy-linux-amd64 -o $HOME/.keploy/bin/keploy
+          curl -L https://github.com/keploy/keploy/releases/download/v0.7.5/keploy-linux-amd64 -o $HOME/.keploy/bin/keploy
           chmod +x $HOME/.keploy/bin/keploy
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
 
@@ -37,7 +37,7 @@ jobs:
           distribution: 'oracle'
           java-version: '21'
 
-      - name: Build Spring Boot Project (Maven)
+      - name: Build Spring Boot Project
         run: |
           cd onelinedaily-backend
           mvn clean package
