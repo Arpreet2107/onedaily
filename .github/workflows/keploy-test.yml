@@ -24,8 +24,13 @@ jobs:
           curl -s https://keploy.io/install.sh | bash
           echo "$HOME/.keploy/bin" >> $GITHUB_PATH
 
+      - name: Add Keploy to PATH
+        run: echo "$HOME/.keploy/bin" >> $GITHUB_PATH
+
       - name: Verify Keploy Installation
-        run: keploy version
+        run: |
+          export PATH="$HOME/.keploy/bin:$PATH"
+          keploy version
 
       - name: Set up Oracle JDK 21
         uses: actions/setup-java@v3
@@ -38,6 +43,7 @@ jobs:
 
       - name: Start Backend and Run Keploy Tests
         run: |
+          export PATH="$HOME/.keploy/bin:$PATH"
           nohup java -jar target/onedaily-backend-0.0.1-SNAPSHOT.jar &
-          sleep 15  # Give server time to fully start
+          sleep 15
           keploy test -c "java -jar target/onedaily-backend-0.0.1-SNAPSHOT.jar" -r true
