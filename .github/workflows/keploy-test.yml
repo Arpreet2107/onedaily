@@ -27,12 +27,12 @@ jobs:
       - name: Install Keploy CLI
         run: curl -s https://keploy.io/install.sh | bash
 
-      - name: Install dependencies
-        working-directory: ./onelinedaily-frontend
+      - name: Install backend dependencies
+        working-directory: ./onelinedaily-backend
         run: npm install
 
-      - name: Start App and Run Keploy Tests
-        working-directory: ./onelinedaily-frontend
+      - name: Start Backend and Run Keploy Tests
+        working-directory: ./onelinedaily-backend
         run: |
           nohup npm start &
           sleep 10
