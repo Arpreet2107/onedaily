@@ -19,23 +19,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
       - name: Install Keploy CLI
-        run: curl -s https://raw.githubusercontent.com/keploy/keploy/main/install.sh | bash
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Start App and Run Keploy Tests
         run: |
-          nohup npm start > app.log 2>&1 &
-          sleep 15
-          keploy test -c "npm start" -r true
+          curl -s https://keploy.io/install.sh | bash
+          echo "$HOME/.keploy/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.keploy/bin:$PATH"
 
-      - name: Stop containers
+      - name: Verify Keploy Installation
+        run: keploy version
+
+      - name: Set up JDK 21 with Oracle
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'oracle'
+          java-version: '21'
+
+      - name: Build Spring Boot Project
         run: |
-          docker ps -q | xargs -r docker stop
+          cd onelinedaily-backend
+          mvn clean package
+
+      - name: Start Backend and Run Keploy Tests
+        run: |
+          cd onelinedaily-backend
+          nohup java -jar target/*.jar &
+          sleep 10
+          keploy test -c "java -jar target/*.jar" -r true
