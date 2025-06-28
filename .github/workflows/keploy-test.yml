@@ -1,4 +1,4 @@
-name: Keploy API Testing
+name: keploy-test
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  keploy-test:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -16,18 +16,17 @@ jobs:
           - 27017:27017
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Install Keploy CLI
         run: |
-          curl -Lo keploy.tar.gz https://github.com/keploy/keploy/releases/download/v2.6.14/keploy_linux_amd64.tar.gz
-          tar -xzf keploy.tar.gz
-          chmod +x keploy
-          sudo mv keploy /usr/local/bin/keploy
+          curl -s https://keploy.io/install.sh | bash
+          echo "$HOME/.keploy/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.keploy/bin:$PATH"
 
       - name: Verify Keploy Installation
-        run: keploy version
+        run: keploy --version
 
       - name: Set up JDK 21 with Oracle
         uses: actions/setup-java@v3
@@ -37,12 +36,12 @@ jobs:
 
       - name: Build Spring Boot Project (Maven)
         run: |
+          cd onelinedaily-backend
           mvn clean package
-        working-directory: onelinedaily-backend
 
-      - name: Start Backend and Run Keploy Tests
+      - name: Start Backend & Run Keploy Tests
         run: |
+          cd onelinedaily-backend
           nohup java -jar target/*.jar &
           sleep 10
           keploy test -c "java -jar target/*.jar" -r true
-        working-directory: onelinedaily-backend
