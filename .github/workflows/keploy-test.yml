@@ -29,10 +29,14 @@ jobs:
           java-version: '21'
 
       - name: Build Spring Boot Project with Maven
-        run: mvn clean package
+        run: |
+          cd onelinedaily-backend
+          mvn clean package
 
       - name: Start Backend and Run Keploy Tests
         run: |
-          nohup java -jar target/*.jar &  # Update jar name if specific
+          cd onelinedaily-backend
+          nohup java -jar target/*.jar &
           sleep 10
           keploy test -c "java -jar target/*.jar" -r true
+
